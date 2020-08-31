@@ -1,9 +1,12 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events,jsx-a11y/no-noninteractive-element-interactions */
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 import { TodosContext } from './App';
+import useAPI from './useAPI';
 
 function ToDoList() {
   const { state, dispatch } = useContext(TodosContext);
@@ -12,9 +15,19 @@ function ToDoList() {
   const [editTodo, setEditTodo] = useState(null);
   const buttonTitle = editMode ? 'Edit' : 'Add';
 
-  const handleSubmit = event => {
+  const endpoint = 'http://localhost:3004/todos/';
+  const savedTodos = useAPI(endpoint);
+
+  useEffect(() => {
+    dispatch({ type: 'get', payload: savedTodos });
+  }, [savedTodos]);
+
+  const handleSubmit = async event => {
     event.preventDefault();
     if (editMode) {
+      await axios.patch(endpoint + editTodo.id, {
+        text: todoText,
+      });
       dispatch({
         type: 'edit',
         payload: { ...editTodo, text: todoText },
@@ -22,7 +35,9 @@ function ToDoList() {
       setEditMode(false);
       setEditTodo(null);
     } else {
-      dispatch({ type: 'add', payload: todoText });
+      const newToDo = { id: uuidv4(), text: todoText };
+      await axios.post(endpoint, newToDo);
+      dispatch({ type: 'add', payload: newToDo });
     }
     setTodoText('');
   };
@@ -34,9 +49,7 @@ function ToDoList() {
           <Form.Control
             type="text"
             placeholder="Enter To Do"
-            onChange={event =>
-              setTodoText(event.target.value)
-            }
+            onChange={event => setTodoText(event.target.value)}
             value={todoText}
           />
         </Form.Group>
@@ -63,17 +76,18 @@ function ToDoList() {
                   setEditTodo(todo);
                 }}
               >
-                Edit
+                <Button variant="link">Edit</Button>
               </td>
               <td
-                onClick={() =>
+                onClick={async () => {
+                  await axios.delete(endpoint + todo.id);
                   dispatch({
                     type: 'delete',
                     payload: todo,
-                  })
-                }
+                  });
+                }}
               >
-                Delete
+                <Button variant="link">Delete</Button>
               </td>
             </tr>
           ))}

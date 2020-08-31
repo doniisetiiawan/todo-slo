@@ -1,25 +1,19 @@
 import React, { useReducer } from 'react';
 import { hot } from 'react-hot-loader/root';
 import Container from 'react-bootstrap/Container';
-import { v4 as uuidv4 } from 'uuid';
 import ToDoList from './ToDoList';
 
 const todosInitialState = {
-  todos: [
-    { id: 1, text: 'finishing writing hooks chapter' },
-    { id: 2, text: 'play with kids' },
-    { id: 3, text: 'read bible' },
-  ],
+  todos: [],
 };
 
 function todosReducer(state, action) {
   switch (action.type) {
+    case 'get':
+      return { ...state, todos: action.payload };
+
     case 'add':
-      const newToDo = {
-        id: uuidv4(),
-        text: action.payload,
-      };
-      const addedToDos = [...state.todos, newToDo];
+      const addedToDos = [...state.todos, action.payload];
       return { ...state, todos: addedToDos };
 
     case 'delete':
@@ -48,10 +42,7 @@ function todosReducer(state, action) {
 export const TodosContext = React.createContext();
 
 function App() {
-  const [state, dispatch] = useReducer(
-    todosReducer,
-    todosInitialState
-  );
+  const [state, dispatch] = useReducer(todosReducer, todosInitialState);
 
   return (
     <div>
